@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct PayTrackerApp: App {
+    let persistence = PersistenceController.shared
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .environment(\.managedObjectContext, persistence.context) // <- дуже важливо
         }
     }
 }
