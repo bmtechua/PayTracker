@@ -11,6 +11,7 @@ enum AppCurrency: String, CaseIterable, Identifiable {
     case uah = "₴ UAH"
     case usd = "$ USD"
     case eur = "€ EUR"
+    case cad = "C$ CAD"
 
     var id: String { rawValue }
 
@@ -19,6 +20,7 @@ enum AppCurrency: String, CaseIterable, Identifiable {
         case .uah: return "₴"
         case .usd: return "$"
         case .eur: return "€"
+        case .cad: return "C$"
         }
     }
 }
