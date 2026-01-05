@@ -16,12 +16,17 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Витрати", systemImage: "list.bullet")
                 }
+            
+            ExpensesListView()
+                .tabItem {
+                    Label("Всі", systemImage: "tray.full")
+                }
 
             ChartsView()
                 .tabItem {
                     Label("Аналітика", systemImage: "chart.pie")
                 }
-
+           
             SettingsView()
                 .tabItem {
                     Label("Налаштування", systemImage: "gear")

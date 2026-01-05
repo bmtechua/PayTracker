@@ -7,9 +7,8 @@
 
 import SwiftUI
 import CoreData
-import Charts
 
-struct CategoryExpense: Identifiable {
+struct CategorySummary: Identifiable {
     let id = UUID()
     let name: String
     let total: Double
@@ -20,29 +19,13 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var context
 
     @State private var selectedMonth = Date().startOfMonthOnly
-    @State private var expenses: [ExpenseEntity] = []
+    @State private var categories: [CategorySummary] = []
 
     @State private var showAddExpense = false
-    @State private var expenseToEdit: ExpenseEntity?
 
-    // MARK: - Computed
-
-    private var totalAmount: Double {
-        expenses.reduce(0) { $0 + $1.amount }
+    var totalAmount: Double {
+        categories.reduce(0) { $0 + $1.total }
     }
-
-    private var categoryExpenses: [CategoryExpense] {
-        Dictionary(grouping: expenses, by: { $0.wrappedCategory })
-            .map {
-                CategoryExpense(
-                    name: $0.key,
-                    total: $0.value.reduce(0) { $0 + $1.amount }
-                )
-            }
-            .sorted { $0.total > $1.total }
-    }
-
-    // MARK: - UI
 
     var body: some View {
         NavigationStack {
@@ -53,51 +36,35 @@ struct HomeView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                // 🔹 Список витрат
+                // 🔹 Категорії
                 List {
-                    ForEach(expenses) { expense in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(expense.wrappedTitle)
-                                Text(expense.wrappedCategory)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                    ForEach(categories) { category in
+                        NavigationLink {
+                            CategoryDetailView(
+                                categoryName: category.name,
+                                month: selectedMonth
+                            )
+                        } label: {
+                            HStack {
+                                Text(category.name)
+                                Spacer()
+                                Text("₴ \(category.total, specifier: "%.2f")")
+                                    .fontWeight(.semibold)
                             }
-                            Spacer()
-                            Text("- ₴\(expense.amount, specifier: "%.2f")")
-                                .foregroundColor(.red)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            expenseToEdit = expense
-                            showAddExpense = true
                         }
                     }
-                    .onDelete(perform: deleteExpense)
                 }
                 .listStyle(.plain)
             }
-
-            // 🔝 Title
             .navigationTitle(selectedMonth.monthYearString)
-
-            // 🔝 TOOLBAR
             .toolbar {
 
-                // ◀️ Попередній місяць
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        changeMonth(-1)
-                    } label: {
+                // ◀️ / ▶️ Місяці
+                ToolbarItemGroup(placement: .navigationBarLeading) {
+                    Button { changeMonth(-1) } label: {
                         Image(systemName: "chevron.left")
                     }
-                }
-
-                // ▶️ Наступний місяць
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        changeMonth(1)
-                    } label: {
+                    Button { changeMonth(1) } label: {
                         Image(systemName: "chevron.right")
                     }
                 }
@@ -105,56 +72,53 @@ struct HomeView: View {
                 // ➕ Додати витрату
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        expenseToEdit = nil
                         showAddExpense = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-
-            // 🔹 Add / Edit sheet
             .sheet(isPresented: $showAddExpense) {
-                AddExpenseView(expenseToEdit: expenseToEdit) {
-                    fetchExpenses()
+                AddExpenseView {
+                    fetchCategories()
                 }
                 .environment(\.managedObjectContext, context)
             }
-
             .onAppear {
-                fetchExpenses()
+                fetchCategories()
             }
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Data
 
     private func changeMonth(_ value: Int) {
-        selectedMonth = Calendar.current.date(
-            byAdding: .month,
-            value: value,
-            to: selectedMonth
-        )!.startOfMonthOnly
-        fetchExpenses()
+        selectedMonth = Calendar.current
+            .date(byAdding: .month, value: value, to: selectedMonth)!
+            .startOfMonthOnly
+        fetchCategories()
     }
 
-    private func fetchExpenses() {
+    private func fetchCategories() {
         let request: NSFetchRequest<ExpenseEntity> = ExpenseEntity.fetchRequest()
-        request.sortDescriptors = [
-            NSSortDescriptor(keyPath: \ExpenseEntity.date, ascending: false)
-        ]
         request.predicate = NSPredicate(
             format: "date >= %@ AND date <= %@",
             selectedMonth.startOfMonth as NSDate,
             selectedMonth.endOfMonth as NSDate
         )
 
-        expenses = (try? context.fetch(request)) ?? []
-    }
+        let expenses = (try? context.fetch(request)) ?? []
 
-    private func deleteExpense(at offsets: IndexSet) {
-        offsets.map { expenses[$0] }.forEach(context.delete)
-        try? context.save()
-        fetchExpenses()
+        let grouped = Dictionary(grouping: expenses) {
+            $0.wrappedCategory
+        }
+
+        categories = grouped.map {
+            CategorySummary(
+                name: $0.key,
+                total: $0.value.reduce(0) { $0 + $1.amount }
+            )
+        }
+        .sorted { $0.total > $1.total }
     }
 }
