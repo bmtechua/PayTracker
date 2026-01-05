@@ -169,7 +169,11 @@ struct ChartsView: View {
                     HStack {
                         Text(item.name)
                         Spacer()
-                        Text("\(currency.symbol) \(item.total, specifier: "%.0f")")
+                        Text(
+                            CurrencyFormatter.string(
+                                amount: item.total,
+                                currencyCode: currency.currencyCode)
+                        )
                     }
                     ProgressView(
                         value: item.total,

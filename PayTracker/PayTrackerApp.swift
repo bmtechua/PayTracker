@@ -9,18 +9,34 @@ import SwiftUI
 
 @main
 struct PayTrackerApp: App {
+    
+    @AppStorage("currency") private var currency: AppCurrency = .systemDefault()
     @AppStorage("theme") private var theme: AppTheme = .system
     
+    @StateObject var userManager = UserManager()
+    @StateObject var toastManager = ToastManager()
+    
     let persistenceController = PersistenceController.shared
+    
+    init() {
+            persistenceController.preloadBaseCategories()
+        }
+
 
        var body: some Scene {
            WindowGroup {
-               MainTabView()
-                   .environment(
-                       \.managedObjectContext,
-                       persistenceController.context
-                   )
-                   .preferredColorScheme(theme.colorScheme)
+               ToastContainer {
+                   MainTabView()
+                       .environment(
+                        \.managedObjectContext,
+                         persistenceController.context
+                       )
+                       
+                       .preferredColorScheme(theme.colorScheme)
+               }
+               .environmentObject(toastManager)
+               .environmentObject(userManager)
+               
            }
        }
     }

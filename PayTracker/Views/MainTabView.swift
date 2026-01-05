@@ -21,6 +21,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Всі", systemImage: "tray.full")
                 }
+            CategoriesView()
+                    .tabItem {
+                        Label("Категорії", systemImage: "tag")
+                    }
 
             ChartsView()
                 .tabItem {

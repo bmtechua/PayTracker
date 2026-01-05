@@ -14,85 +14,96 @@ struct CategorySummary: Identifiable {
     let total: Double
 }
 
+// MARK: - HomeView
+
 struct HomeView: View {
 
     @Environment(\.managedObjectContext) private var context
+    @AppStorage("currency") private var currency: AppCurrency = .uah
+    @EnvironmentObject var toast: ToastManager
+
 
     @State private var selectedMonth = Date().startOfMonthOnly
     @State private var categories: [CategorySummary] = []
-
     @State private var showAddExpense = false
-    
-    @AppStorage("currency") private var currency: AppCurrency = .uah
 
     var totalAmount: Double {
         categories.reduce(0) { $0 + $1.total }
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-
-                // 🔹 Загальна сума
-                Text("\(currency.symbol) \(totalAmount, specifier: "%.2f")")
+        ZStack {
+            NavigationStack {
+                VStack(spacing: 16) {
+                    // 🔹 Загальна сума
+                    Text(
+                        CurrencyFormatter.string(amount: totalAmount,
+                                                 currencyCode: currency.currencyCode)
+                    )
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                // 🔹 Категорії
-                List {
-                    ForEach(categories) { category in
-                        NavigationLink {
-                            CategoryDetailView(
-                                categoryName: category.name,
-                                month: selectedMonth
-                            )
-                        } label: {
-                            HStack {
-                                Text(category.name)
-                                Spacer()
-                                Text("\(currency.symbol) \(category.total, specifier: "%.2f")")
+                    // 🔹 Категорії
+                    List {
+                        ForEach(categories) { category in
+                            NavigationLink {
+                                CategoryDetailView(categoryName: category.name,
+                                                   month: selectedMonth)
+                            } label: {
+                                HStack {
+                                    Text(category.name)
+                                    Spacer()
+                                    Text(
+                                        CurrencyFormatter.string(amount: category.total,
+                                                                 currencyCode: currency.currencyCode)
+                                    )
                                     .fontWeight(.semibold)
+                                }
                             }
                         }
                     }
+                    .listStyle(.plain)
                 }
-                .listStyle(.plain)
-            }
-            .navigationTitle(selectedMonth.monthYearString)
-            .toolbar {
+                .navigationTitle(selectedMonth.monthYearString)
+                .toolbar {
+                    // ◀️ / ▶️ Місяці
+                    ToolbarItemGroup(placement: .navigationBarLeading) {
+                        Button { changeMonth(-1) } label: { Image(systemName: "chevron.left") }
+                        Button { changeMonth(1) } label: { Image(systemName: "chevron.right") }
+                    }
 
-                // ◀️ / ▶️ Місяці
-                ToolbarItemGroup(placement: .navigationBarLeading) {
-                    Button { changeMonth(-1) } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                    Button { changeMonth(1) } label: {
-                        Image(systemName: "chevron.right")
+                    // ➕ Додати витрату
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button { showAddExpense = true } label: { Image(systemName: "plus") }
                     }
                 }
+                .sheet(isPresented: $showAddExpense) {
+                    AddExpenseView {
+                        fetchCategories()
+                        toast.show("Витрату додано ✅")
+                    }
+                    .environment(\.managedObjectContext, context)
+                    .environmentObject(toast)
+                }
+                .onAppear { fetchCategories() }
+            }
 
-                // ➕ Додати витрату
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showAddExpense = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showAddExpense) {
-                AddExpenseView {
-                    fetchCategories()
-                }
-                .environment(\.managedObjectContext, context)
-            }
-            .onAppear {
-                fetchCategories()
-            }
+            // 🔹 Toast Container
+            if let currentToast = toast.currentToast {
+                            VStack {
+                                ToastView(message: currentToast.message) {
+                                    toast.dismiss() // виклик методy dismiss()
+                                }
+                                Spacer()
+                            }
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .animation(.spring(), value: currentToast.id)
+                            .zIndex(1)
+                        }
         }
     }
 
-    // MARK: - Data
+    // MARK: - Helpers
 
     private func changeMonth(_ value: Int) {
         selectedMonth = Calendar.current
@@ -111,16 +122,10 @@ struct HomeView: View {
 
         let expenses = (try? context.fetch(request)) ?? []
 
-        let grouped = Dictionary(grouping: expenses) {
-            $0.wrappedCategory
-        }
+        let grouped = Dictionary(grouping: expenses) { $0.wrappedCategory }
 
-        categories = grouped.map {
-            CategorySummary(
-                name: $0.key,
-                total: $0.value.reduce(0) { $0 + $1.amount }
-            )
-        }
-        .sorted { $0.total > $1.total }
+        categories = grouped.map { CategorySummary(name: $0.key,
+                                                   total: $0.value.reduce(0) { $0 + $1.amount }) }
+            .sorted { $0.total > $1.total }
     }
 }

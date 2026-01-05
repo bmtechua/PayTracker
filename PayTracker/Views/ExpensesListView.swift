@@ -25,7 +25,7 @@ struct DayGroup: Identifiable {
 struct ExpensesListView: View {
 
     @Environment(\.managedObjectContext) private var context
-    
+    @EnvironmentObject private var toast: ToastManager
     @AppStorage("currency") private var currency: AppCurrency = .uah
 
     // Filters
@@ -36,7 +36,6 @@ struct ExpensesListView: View {
     @State private var expenses: [ExpenseEntity] = []
 
     // UI
-    @State private var showAddExpense = false
     @State private var expenseToEdit: ExpenseEntity?
 
     // MARK: - Computed
@@ -115,23 +114,34 @@ struct ExpensesListView: View {
                 // ➕ Add
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        expenseToEdit = nil
-                        showAddExpense = true
+                        let newExpense = ExpenseEntity(context: context)
+                        newExpense.id = UUID()
+                        newExpense.date = Date()
+
+                        expenseToEdit = newExpense
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
+
             }
 
             // 🔍 Search
             .searchable(text: $searchText, prompt: "Пошук витрат")
 
             // ➕ Add / Edit sheet
-            .sheet(isPresented: $showAddExpense) {
-                AddExpenseView(expenseToEdit: expenseToEdit) {
+            .sheet(item: $expenseToEdit) { expense in
+                AddExpenseView(expenseToEdit: expense) {
                     fetchExpenses()
+
+                    if expense.objectID.isTemporaryID {
+                        toast.show("Витрату додано ✅")
+                    } else {
+                        toast.show("Витрату оновлено ✅")
+                    }
                 }
                 .environment(\.managedObjectContext, context)
+                .environmentObject(toast)
             }
 
             .onAppear {
@@ -151,13 +161,17 @@ struct ExpensesListView: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
-            Text("\(currency.symbol) \(expense.amount, specifier: "%.2f")")
+            Text(
+                CurrencyFormatter.string(
+                    amount: expense.amount,
+                    currencyCode: currency.currencyCode)
+            )
                 .foregroundColor(.red)
         }
         .contentShape(Rectangle())
         .onTapGesture {
             expenseToEdit = expense
-            showAddExpense = true
+            //showAddExpense = true
         }
     }
 
@@ -166,7 +180,11 @@ struct ExpensesListView: View {
             Text(group.date.formatted(date: .abbreviated, time: .omitted))
                 .font(.headline)
             Spacer()
-            Text("\(currency.symbol)  \(group.total, specifier: "%.0f")")
+            Text(
+                CurrencyFormatter.string(
+                    amount: group.total,
+                    currencyCode: currency.currencyCode)
+            )
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }

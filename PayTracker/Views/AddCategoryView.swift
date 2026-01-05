@@ -4,12 +4,10 @@
 //
 //  Created by user on 01.01.2026.
 //
-
 import SwiftUI
 import CoreData
 
 struct AddCategoryView: View {
-
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -20,73 +18,30 @@ struct AddCategoryView: View {
     @State private var icon: String = "tag"
     @State private var colorHex: String = "#999999"
 
-    // Можливі іконки
-    private let icons = ["tag", "cart", "house", "car", "fork.knife", "heart", "star", "gift", "book"]
-
-    // Можливі кольори
-    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .gray]
-
     var body: some View {
         NavigationStack {
             Form {
-                Section("Назва") {
-                    TextField("Введіть назву", text: $name)
-                }
-
-                Section("Іконка") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(icons, id: \.self) { iconName in
-                                Image(systemName: iconName)
-                                    .font(.title)
-                                    .padding()
-                                    .background(icon == iconName ? Color.gray.opacity(0.3) : Color.clear)
-                                    .cornerRadius(8)
-                                    .onTapGesture {
-                                        icon = iconName
-                                    }
-                            }
-                        }
-                    }
-                }
-
-                Section("Колір") {
-                    HStack {
-                        ForEach(colors, id: \.self) { color in
-                            Circle()
-                                .fill(color)
-                                .frame(width: 30, height: 30)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.black, lineWidth: colorHex == color.toHex() ? 2 : 0)
-                                )
-                                .onTapGesture {
-                                    colorHex = color.toHex()
-                                }
-                        }
-                    }
-                }
+                TextField("Назва категорії", text: $name)
+                TextField("Іконка (SF Symbol)", text: $icon)
+                ColorPicker("Колір", selection: Binding(
+                    get: { Color(hex: colorHex) },
+                    set: { colorHex = $0.toHex() }
+                ))
             }
-            .navigationTitle(categoryToEdit == nil ? "Нова категорія" : "Редагувати")
+            .navigationTitle(categoryToEdit == nil ? "Нова категорія" : "Редагувати категорію")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Зберегти") {
-                        saveCategory()
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button("Зберегти") { saveCategory() }
                 }
-
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Скасувати") {
-                        dismiss()
-                    }
+                    Button("Скасувати") { dismiss() }
                 }
             }
             .onAppear {
-                if let cat = categoryToEdit {
-                    name = cat.name ?? ""
-                    icon = cat.icon ?? "tag"
-                    colorHex = cat.colorHex ?? "#999999"
+                if let category = categoryToEdit {
+                    name = category.name ?? ""
+                    icon = category.icon ?? "tag"
+                    colorHex = category.colorHex ?? "#999999"
                 }
             }
         }
@@ -94,40 +49,41 @@ struct AddCategoryView: View {
 
     private func saveCategory() {
         let category = categoryToEdit ?? CategoryEntity(context: context)
-
-        if categoryToEdit == nil {
-            category.id = UUID()
-        }
-
-        category.name = name.trimmingCharacters(in: .whitespaces)
+        category.name = name
         category.icon = icon
         category.colorHex = colorHex
 
         do {
             try context.save()
-            dismiss()
             onSave?()
+            dismiss()
         } catch {
             print("Помилка збереження категорії:", error)
         }
     }
 }
 
-// MARK: - Допоміжне перетворення Color -> HEX
+// MARK: - Color extension для hex
+
 extension Color {
-    func toHex() -> String {
-        let uiColor = UIColor(self)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
-        let ri = Int(r*255), gi = Int(g*255), bi = Int(b*255)
-        return String(format: "#%02X%02X%02X", ri, gi, bi)
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int = UInt64()
+        Scanner(string: hex).scanHexInt64(&int)
+        let r, g, b: UInt64
+        switch hex.count {
+        case 6:
+            (r, g, b) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
+        default:
+            (r, g, b) = (153, 153, 153) // сірий дефолт
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: 1
+        )
     }
 }
 
-#Preview {
-    let persistence = PersistenceController.shared
-    let context = persistence.context
-
-    AddCategoryView()
-        .environment(\.managedObjectContext, context)
-}
