@@ -53,32 +53,6 @@ struct HomeView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                // 🔹 Графік
-                if !categoryExpenses.isEmpty {
-                    if #available(iOS 16.0, *) {
-                        Chart(categoryExpenses) { item in
-                            SectorMark(
-                                angle: .value("Сума", item.total),
-                                innerRadius: .ratio(0.55)
-                            )
-                            .foregroundStyle(by: .value("Категорія", item.name))
-                        }
-                        .frame(height: 240)
-                        .padding(.horizontal)
-                    } else {
-                        VStack(spacing: 8) {
-                            ForEach(categoryExpenses) { item in
-                                ProgressView(
-                                    item.name,
-                                    value: item.total,
-                                    total: totalAmount
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-
                 // 🔹 Список витрат
                 List {
                     ForEach(expenses) { expense in
