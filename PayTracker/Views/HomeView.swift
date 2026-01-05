@@ -19,11 +19,13 @@ struct HomeView: View {
 
     @Environment(\.managedObjectContext) private var context
 
-    @State private var selectedMonth = Date()
+    @State private var selectedMonth = Date().startOfMonthOnly
     @State private var expenses: [ExpenseEntity] = []
 
     @State private var showAddExpense = false
     @State private var expenseToEdit: ExpenseEntity?
+
+    // MARK: - Computed
 
     private var totalAmount: Double {
         expenses.reduce(0) { $0 + $1.amount }
@@ -40,9 +42,11 @@ struct HomeView: View {
             .sorted { $0.total > $1.total }
     }
 
+    // MARK: - UI
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
 
                 // 🔹 Загальна сума
                 Text("₴ \(totalAmount, specifier: "%.2f")")
@@ -62,7 +66,7 @@ struct HomeView: View {
                         .frame(height: 240)
                         .padding(.horizontal)
                     } else {
-                        VStack {
+                        VStack(spacing: 8) {
                             ForEach(categoryExpenses) { item in
                                 ProgressView(
                                     item.name,
@@ -75,7 +79,7 @@ struct HomeView: View {
                     }
                 }
 
-                // 🔹 Список
+                // 🔹 Список витрат
                 List {
                     ForEach(expenses) { expense in
                         HStack {
@@ -83,7 +87,7 @@ struct HomeView: View {
                                 Text(expense.wrappedTitle)
                                 Text(expense.wrappedCategory)
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                             Spacer()
                             Text("- ₴\(expense.amount, specifier: "%.2f")")
@@ -97,35 +101,28 @@ struct HomeView: View {
                     }
                     .onDelete(perform: deleteExpense)
                 }
+                .listStyle(.plain)
             }
+
+            // 🔝 Title
             .navigationTitle(selectedMonth.monthYearString)
 
-            // 🔹 TOOLBAR
+            // 🔝 TOOLBAR
             .toolbar {
 
-                // ⬅️ Місяць назад
+                // ◀️ Попередній місяць
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        selectedMonth = Calendar.current.date(
-                            byAdding: .month,
-                            value: -1,
-                            to: selectedMonth
-                        )!
-                        fetchExpenses()
+                        changeMonth(-1)
                     } label: {
                         Image(systemName: "chevron.left")
                     }
                 }
 
-                // ➡️ Місяць вперед
+                // ▶️ Наступний місяць
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        selectedMonth = Calendar.current.date(
-                            byAdding: .month,
-                            value: 1,
-                            to: selectedMonth
-                        )!
-                        fetchExpenses()
+                        changeMonth(1)
                     } label: {
                         Image(systemName: "chevron.right")
                     }
@@ -144,8 +141,10 @@ struct HomeView: View {
 
             // 🔹 Add / Edit sheet
             .sheet(isPresented: $showAddExpense) {
-                AddExpenseView(expenseToEdit: expenseToEdit)
-                    .environment(\.managedObjectContext, context)
+                AddExpenseView(expenseToEdit: expenseToEdit) {
+                    fetchExpenses()
+                }
+                .environment(\.managedObjectContext, context)
             }
 
             .onAppear {
@@ -154,7 +153,16 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - CoreData
+    // MARK: - Helpers
+
+    private func changeMonth(_ value: Int) {
+        selectedMonth = Calendar.current.date(
+            byAdding: .month,
+            value: value,
+            to: selectedMonth
+        )!.startOfMonthOnly
+        fetchExpenses()
+    }
 
     private func fetchExpenses() {
         let request: NSFetchRequest<ExpenseEntity> = ExpenseEntity.fetchRequest()
@@ -175,10 +183,4 @@ struct HomeView: View {
         try? context.save()
         fetchExpenses()
     }
-}
-
-#Preview {
-    let persistence = PersistenceController.shared
-    HomeView()
-        .environment(\.managedObjectContext, persistence.context)
 }
