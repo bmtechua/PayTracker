@@ -7,19 +7,77 @@
 
 import SwiftUI
 
+enum AppCurrency: String, CaseIterable, Identifiable {
+    case uah = "₴ UAH"
+    case usd = "$ USD"
+    case eur = "€ EUR"
+
+    var id: String { rawValue }
+
+    var symbol: String {
+        switch self {
+        case .uah: return "₴"
+        case .usd: return "$"
+        case .eur: return "€"
+        }
+    }
+}
+
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system = "Системна"
+    case light = "Світла"
+    case dark = "Темна"
+
+    var id: String { rawValue }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 struct SettingsView: View {
+
+    @AppStorage("currency") private var currency: AppCurrency = .uah
+    @AppStorage("theme") private var theme: AppTheme = .system
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Загальні") {
-                    Text("Валюта")
-                    Text("Мова")
+            Form {
+
+                // 💱 Валюта
+                Section(header: Text("Валюта")) {
+                    Picker("Основна валюта", selection: $currency) {
+                        ForEach(AppCurrency.allCases) { currency in
+                            Text(currency.rawValue)
+                                .tag(currency)
+                        }
+                    }
+                    .pickerStyle(.navigationLink)
                 }
 
-                Section("Про додаток") {
-                    Text("Версія 1.0")
-                    Text("Розробник")
+                // 🎨 Тема
+                Section(header: Text("Оформлення")) {
+                    Picker("Тема", selection: $theme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.rawValue)
+                                .tag(theme)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                // ℹ️ Інфо
+                Section {
+                    HStack {
+                        Text("Версія")
+                        Spacer()
+                        Text(Bundle.main.appVersion)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
             .navigationTitle("Налаштування")

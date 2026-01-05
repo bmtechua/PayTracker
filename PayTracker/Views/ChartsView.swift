@@ -12,6 +12,8 @@ import Charts
 struct ChartsView: View {
 
     @Environment(\.managedObjectContext) private var context
+    @AppStorage("currency") private var currency: AppCurrency = .uah
+
 
     // Filters
     @State private var selectedMonth = Date().startOfMonthOnly
@@ -167,7 +169,7 @@ struct ChartsView: View {
                     HStack {
                         Text(item.name)
                         Spacer()
-                        Text("₴ \(item.total, specifier: "%.0f")")
+                        Text("\(currency.symbol) \(item.total, specifier: "%.0f")")
                     }
                     ProgressView(
                         value: item.total,

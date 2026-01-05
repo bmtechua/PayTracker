@@ -22,6 +22,8 @@ struct HomeView: View {
     @State private var categories: [CategorySummary] = []
 
     @State private var showAddExpense = false
+    
+    @AppStorage("currency") private var currency: AppCurrency = .uah
 
     var totalAmount: Double {
         categories.reduce(0) { $0 + $1.total }
@@ -32,7 +34,7 @@ struct HomeView: View {
             VStack(spacing: 16) {
 
                 // 🔹 Загальна сума
-                Text("₴ \(totalAmount, specifier: "%.2f")")
+                Text("\(currency.symbol) \(totalAmount, specifier: "%.2f")")
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
@@ -48,7 +50,7 @@ struct HomeView: View {
                             HStack {
                                 Text(category.name)
                                 Spacer()
-                                Text("₴ \(category.total, specifier: "%.2f")")
+                                Text("\(currency.symbol) \(category.total, specifier: "%.2f")")
                                     .fontWeight(.semibold)
                             }
                         }

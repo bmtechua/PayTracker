@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct PayTrackerApp: App {
+    @AppStorage("theme") private var theme: AppTheme = .system
+    
     let persistenceController = PersistenceController.shared
 
        var body: some Scene {
@@ -18,6 +20,7 @@ struct PayTrackerApp: App {
                        \.managedObjectContext,
                        persistenceController.context
                    )
+                   .preferredColorScheme(theme.colorScheme)
            }
        }
     }

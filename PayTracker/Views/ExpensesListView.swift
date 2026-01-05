@@ -25,6 +25,8 @@ struct DayGroup: Identifiable {
 struct ExpensesListView: View {
 
     @Environment(\.managedObjectContext) private var context
+    
+    @AppStorage("currency") private var currency: AppCurrency = .uah
 
     // Filters
     @State private var selectedMonth = Date().startOfMonthOnly
@@ -149,7 +151,7 @@ struct ExpensesListView: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
-            Text("₴ \(expense.amount, specifier: "%.2f")")
+            Text("\(currency.symbol) \(expense.amount, specifier: "%.2f")")
                 .foregroundColor(.red)
         }
         .contentShape(Rectangle())
@@ -164,7 +166,7 @@ struct ExpensesListView: View {
             Text(group.date.formatted(date: .abbreviated, time: .omitted))
                 .font(.headline)
             Spacer()
-            Text("₴ \(group.total, specifier: "%.0f")")
+            Text("\(currency.symbol)  \(group.total, specifier: "%.0f")")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
