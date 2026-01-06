@@ -35,7 +35,12 @@ struct PayTrackerApp: App {
                        .preferredColorScheme(theme.colorScheme)
                }
                .environmentObject(toastManager)
-               .environmentObject(userManager)
+               .onAppear {
+                                       CategoryBootstrap
+                                           .addBaseCategoriesIfNeeded(
+                                               context: persistenceController.context
+                                           )
+                                   }
                
            }
        }

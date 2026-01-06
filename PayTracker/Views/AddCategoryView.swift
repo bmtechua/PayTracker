@@ -31,17 +31,20 @@ struct AddCategoryView: View {
             .navigationTitle(categoryToEdit == nil ? "Нова категорія" : "Редагувати категорію")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Зберегти") { saveCategory() }
+                    Button("Зберегти") {
+                        saveCategory()
+                    }
+                    .disabled(categoryToEdit?.isPremium == false)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Скасувати") { dismiss() }
                 }
             }
             .onAppear {
-                if let category = categoryToEdit {
-                    name = category.name ?? ""
-                    icon = category.icon ?? "tag"
-                    colorHex = category.colorHex ?? "#999999"
+                if let c = categoryToEdit {
+                    name = c.name ?? ""
+                    icon = c.icon ?? "tag"
+                    colorHex = c.colorHex ?? "#999999"
                 }
             }
         }

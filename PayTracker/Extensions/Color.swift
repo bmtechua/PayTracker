@@ -25,7 +25,7 @@ extension Color {
 
 
 
-let defaults: [(String, String, String)] = [
+let defaults1: [(String, String, String)] = [
     ("Їжа", "fork.knife", "#FF6347"),
     ("Транспорт", "car.fill", "#1E90FF"),
     ("Розваги", "gamecontroller.fill", "#FFD700"),

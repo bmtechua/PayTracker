@@ -45,6 +45,7 @@ struct SettingsView: View {
 
     @AppStorage("currency") private var currency: AppCurrency = .uah
     @AppStorage("theme") private var theme: AppTheme = .system
+    @AppStorage("isPremiumUser") private var isPremiumUser = false
 
     var body: some View {
         NavigationStack {
@@ -70,6 +71,22 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                }
+                
+                // Преміум
+                Section {
+                    if isPremiumUser {
+                        NavigationLink("Категорії", destination: CategoriesView())
+                    } else {
+                        HStack {
+                            Text("Категорії")
+                            Spacer()
+                            Image(systemName: "lock.fill")
+                        }
+                        .onTapGesture {
+                            // показати paywall / toast
+                        }
+                    }
                 }
 
                 // ℹ️ Інфо

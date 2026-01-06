@@ -10,7 +10,6 @@ import CoreData
 
 struct CategoriesView: View {
     @Environment(\.managedObjectContext) private var context
-    @EnvironmentObject var userManager: UserManager
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \CategoryEntity.name, ascending: true)]
@@ -20,61 +19,49 @@ struct CategoriesView: View {
     @State private var showAddCategory = false
     @State private var categoryToEdit: CategoryEntity?
 
-    // Базові категорії
-    private let baseCategories = [
-        ("Їжа", "fork.knife", "#FF6B6B"),
-        ("Транспорт", "car", "#4ECDC4"),
-        ("Розваги", "gamecontroller", "#FFD93D"),
-        ("Комунальні", "house.fill", "#32CD32")
-    ]
+    private var isPremiumUser: Bool {
+        categories.contains(where: { $0.isPremium })
+    }
 
     var body: some View {
         NavigationStack {
             List {
-                // 🔹 Базові категорії
-                ForEach(baseCategories, id: \.0) { item in
-                    HStack {
-                        Image(systemName: item.1)
-                            .foregroundColor(Color(hex: item.2))
-                        Text(item.0)
-                        Spacer()
-                        if userManager.isPremium {
-                            Button("Редагувати") {
-                                // для базових категорій можна реалізувати клон
-                                categoryToEdit = nil
-                                showAddCategory = true
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                        }
-                    }
-                }
-
-                // 🔹 Користувацькі категорії
-                ForEach(categories, id: \.self) { category in
+                ForEach(categories) { category in
                     HStack {
                         Image(systemName: category.icon ?? "tag")
-                            .foregroundColor(Color(hex: category.colorHex ?? "#999999"))
+                            .foregroundColor(
+                                Color(hex: category.colorHex ?? "#999999")
+                            )
+
                         Text(category.name ?? "")
                         Spacer()
-                        if userManager.isPremium {
+
+                        if category.isPremium {
                             Button("Редагувати") {
                                 categoryToEdit = category
                                 showAddCategory = true
                             }
-                            .buttonStyle(BorderlessButtonStyle())
+                            .buttonStyle(.borderless)
+                        } else {
+                            Text("Базова")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
-                .onDelete { offsets in
-                    if userManager.isPremium {
-                        deleteCategory(at: offsets)
-                    }
+                .onDelete { indexSet in
+                    indexSet
+                        .map { categories[$0] }
+                        .filter { $0.isPremium }
+                        .forEach(context.delete)
+
+                    try? context.save()
                 }
             }
             .navigationTitle("Категорії")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if userManager.isPremium {
+                    if isPremiumUser {
                         Button {
                             categoryToEdit = nil
                             showAddCategory = true
@@ -95,17 +82,4 @@ struct CategoriesView: View {
             }
         }
     }
-
-    private func deleteCategory(at offsets: IndexSet) {
-        offsets.map { categories[$0] }.forEach { context.delete($0) }
-        do { try context.save() } catch { print("Помилка видалення категорії:", error) }
-    }
-}
-
-// Preview
-#Preview {
-    let persistence = PersistenceController.shared
-    let context = persistence.context
-    CategoriesView()
-        .environment(\.managedObjectContext, context)
 }
