@@ -9,10 +9,13 @@ import CoreData
 
 struct CategoryBootstrap {
 
-    private static let key = "baseCategoriesAdded_v1"
-
     static func addBaseCategoriesIfNeeded(context: NSManagedObjectContext) {
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
+
+        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        request.fetchLimit = 1
+
+        let count = (try? context.count(for: request)) ?? 0
+        guard count == 0 else { return }
 
         let base: [(String, String, String)] = [
             ("Їжа", "fork.knife", "#FF6B6B"),
@@ -28,10 +31,9 @@ struct CategoryBootstrap {
             c.name = item.0
             c.icon = item.1
             c.colorHex = item.2
-            c.isPremium = false   // 🔒 базова
+            c.isPremium = false
         }
 
         try? context.save()
-        UserDefaults.standard.set(true, forKey: key)
     }
 }

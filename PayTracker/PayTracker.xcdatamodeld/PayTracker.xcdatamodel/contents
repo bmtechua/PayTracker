@@ -7,6 +7,11 @@
         <attribute name="isPremium" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="name" attributeType="String"/>
         <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ExpenseEntity" inverseName="categoryRel" inverseEntity="ExpenseEntity"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="name"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
     <entity name="ExpenseEntity" representedClassName="ExpenseEntity" syncable="YES" codeGenerationType="class">
         <attribute name="amount" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>

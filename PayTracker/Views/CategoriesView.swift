@@ -10,6 +10,8 @@ import CoreData
 
 struct CategoriesView: View {
     @Environment(\.managedObjectContext) private var context
+    @EnvironmentObject var userManager: UserManager
+    @EnvironmentObject var toastManager: ToastManager
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \CategoryEntity.name, ascending: true)]
@@ -19,9 +21,9 @@ struct CategoriesView: View {
     @State private var showAddCategory = false
     @State private var categoryToEdit: CategoryEntity?
 
-    private var isPremiumUser: Bool {
+   /* private var isPremiumUser: Bool {
         categories.contains(where: { $0.isPremium })
-    }
+    }*/
 
     var body: some View {
         NavigationStack {
@@ -36,38 +38,72 @@ struct CategoriesView: View {
                         Text(category.name ?? "")
                         Spacer()
 
-                        if category.isPremium {
+                        if !category.isPremium {
+                            HStack(spacing: 4) {
+                                Image(systemName: "lock.fill")
+                                    .font(.caption2)
+                                Text("Базова")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.secondary)
+
+                        } else if userManager.isPremium {
                             Button("Редагувати") {
                                 categoryToEdit = category
                                 showAddCategory = true
                             }
                             .buttonStyle(.borderless)
+
                         } else {
-                            Text("Базова")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            HStack(spacing: 4) {
+                                Image(systemName: "lock.fill")
+                                    .font(.caption2)
+                                Text("Premium")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.orange)
                         }
                     }
                 }
                 .onDelete { indexSet in
-                    indexSet
+                    guard userManager.isPremium else {
+                        toastManager.show(
+                            "Видалення категорій доступне в Premium",
+                        )
+                        return
+                    }
+
+                    let deletable = indexSet
                         .map { categories[$0] }
                         .filter { $0.isPremium }
-                        .forEach(context.delete)
 
+                    guard !deletable.isEmpty else {
+                        toastManager.show(
+                            "Базові категорії не можна видаляти"
+                        )
+                        return
+                    }
+
+                    deletable.forEach(context.delete)
                     try? context.save()
                 }
+
+
             }
             .navigationTitle("Категорії")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if isPremiumUser {
-                        Button {
+                    Button {
+                        if userManager.isPremium {
                             categoryToEdit = nil
                             showAddCategory = true
-                        } label: {
-                            Image(systemName: "plus")
+                        } else {
+                            toastManager.show(
+                                "Додавання категорій доступне в Premium"
+                            )
                         }
+                    } label: {
+                        Image(systemName: "plus")
                     }
                 }
             }

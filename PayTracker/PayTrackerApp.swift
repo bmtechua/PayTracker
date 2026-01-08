@@ -19,10 +19,9 @@ struct PayTrackerApp: App {
     let persistenceController = PersistenceController.shared
     
     init() {
-            persistenceController.preloadBaseCategories()
-        }
-
-
+           persistenceController.preloadBaseCategories()
+       }
+  
        var body: some Scene {
            WindowGroup {
                ToastContainer {
@@ -35,13 +34,7 @@ struct PayTrackerApp: App {
                        .preferredColorScheme(theme.colorScheme)
                }
                .environmentObject(toastManager)
-               .onAppear {
-                                       CategoryBootstrap
-                                           .addBaseCategoriesIfNeeded(
-                                               context: persistenceController.context
-                                           )
-                                   }
-               
+               .environmentObject(userManager)
            }
        }
     }
