@@ -12,9 +12,9 @@ struct AddExpenseView: View {
 
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var toastManager: ToastManager // 🔹 отримуємо ToastManager
+    //@EnvironmentObject var toastManager: ToastManager // 🔹 отримуємо ToastManager
 
-    var onSave: (() -> Void)? = nil
+    var onSave: ((Bool) -> Void)? = nil
 
     @State private var title = ""
     @State private var amount = ""
@@ -28,7 +28,7 @@ struct AddExpenseView: View {
 
     var expenseToEdit: ExpenseEntity?
 
-    init(expenseToEdit: ExpenseEntity? = nil, onSave: (() -> Void)? = nil) {
+    init(expenseToEdit: ExpenseEntity? = nil, onSave: ((Bool) -> Void)? = nil) {
         self.expenseToEdit = expenseToEdit
         self.onSave = onSave
     }
@@ -73,7 +73,7 @@ struct AddExpenseView: View {
             let selectedCategory,
             let amountValue = Double(amount)
         else {
-            toastManager.show("Заповніть усі поля ❌")
+            //toastManager.show("Заповніть усі поля ❌")
             return
         }
 
@@ -90,16 +90,17 @@ struct AddExpenseView: View {
             try context.save()
             
             // 🔹 Показати toast про успіх
-            toastManager.show(expenseToEdit == nil ? "Витрату додано ✅" : "Витрату оновлено ✅")
+            //toastManager.show(expenseToEdit == nil ? "Витрату додано ✅" : "Витрату оновлено ✅")
             
             // 🔹 Оновити список витрат у батьківському вью
-            onSave?()
+            onSave?(expenseToEdit == nil) // true = додано
             
             // 🔹 Закрити модальне вікно
             dismiss()
         } catch {
+            onSave?(false)
             print("❌ Save error:", error)
-            toastManager.show("Помилка при збереженні ❌")
+            //toastManager.show("Помилка при збереженні ❌")
         }
     }
 }

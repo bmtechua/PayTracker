@@ -37,6 +37,7 @@ struct ExpensesListView: View {
 
     // UI
     @State private var expenseToEdit: ExpenseEntity?
+    @State private var showAddExpense = false
 
     // MARK: - Computed
 
@@ -80,7 +81,7 @@ struct ExpensesListView: View {
             }
             .listStyle(.plain)
 
-            // 🔝 Custom title with period
+            // 🔝 Custom title
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack {
@@ -102,43 +103,24 @@ struct ExpensesListView: View {
                     }
                 }
 
-                // 📤 Export CSV
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        exportCSV()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                }
-
                 // ➕ Add
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        let newExpense = ExpenseEntity(context: context)
-                        newExpense.id = UUID()
-                        newExpense.date = Date()
-
-                        expenseToEdit = newExpense
+                        expenseToEdit = nil
+                        showAddExpense = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
-
             }
 
             // 🔍 Search
             .searchable(text: $searchText, prompt: "Пошук витрат")
 
-            // ➕ Add / Edit sheet
-            .sheet(item: $expenseToEdit) { expense in
-                AddExpenseView(expenseToEdit: expense) {
+            // ➕ Add / ✏️ Edit
+            .sheet(isPresented: $showAddExpense) {
+                AddExpenseView(expenseToEdit: expenseToEdit) { _ in
                     fetchExpenses()
-
-                    if expense.objectID.isTemporaryID {
-                        toast.show("Витрату додано ✅")
-                    } else {
-                        toast.show("Витрату оновлено ✅")
-                    }
                 }
                 .environment(\.managedObjectContext, context)
                 .environmentObject(toast)
@@ -150,7 +132,7 @@ struct ExpensesListView: View {
         }
     }
 
-    // MARK: - Rows & Headers
+    // MARK: - Rows
 
     private func expenseRow(_ expense: ExpenseEntity) -> some View {
         HStack {
@@ -164,14 +146,15 @@ struct ExpensesListView: View {
             Text(
                 CurrencyFormatter.string(
                     amount: expense.amount,
-                    currencyCode: currency.currencyCode)
+                    currencyCode: currency.currencyCode
+                )
             )
-                .foregroundColor(.red)
+            .foregroundColor(.red)
         }
         .contentShape(Rectangle())
         .onTapGesture {
             expenseToEdit = expense
-            //showAddExpense = true
+            showAddExpense = true
         }
     }
 
@@ -183,10 +166,11 @@ struct ExpensesListView: View {
             Text(
                 CurrencyFormatter.string(
                     amount: group.total,
-                    currencyCode: currency.currencyCode)
+                    currencyCode: currency.currencyCode
+                )
             )
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            .font(.subheadline)
+            .foregroundColor(.secondary)
         }
         .padding(.vertical, 4)
     }
@@ -218,42 +202,5 @@ struct ExpensesListView: View {
         offsets.map { group.expenses[$0] }.forEach(context.delete)
         try? context.save()
         fetchExpenses()
-    }
-
-    // MARK: - Export CSV
-
-    private func exportCSV() {
-        let header = "Date,Title,Category,Amount\n"
-
-        let rows = expenses.map {
-            "\(formatDate($0.date)),\($0.wrappedTitle),\($0.wrappedCategory),\($0.amount)"
-        }
-        .joined(separator: "\n")
-
-        let csv = header + rows
-
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("expenses_\(periodTitle).csv")
-
-        try? csv.write(to: url, atomically: true, encoding: .utf8)
-
-        let activityVC = UIActivityViewController(
-            activityItems: [url],
-            applicationActivities: nil
-        )
-
-        UIApplication.shared
-            .connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-            .first?
-            .rootViewController?
-            .present(activityVC, animated: true)
-    }
-
-    private func formatDate(_ date: Date?) -> String {
-        guard let date else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter.string(from: date)
     }
 }

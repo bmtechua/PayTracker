@@ -19,7 +19,10 @@ struct PayTrackerApp: App {
     let persistenceController = PersistenceController.shared
     
     init() {
-           persistenceController.preloadBaseCategories()
+        CategoryBootstrap.addBaseCategoriesIfNeeded(
+                    context: persistenceController.context
+                )
+           //persistenceController.preloadBaseCategories()
        }
   
        var body: some Scene {

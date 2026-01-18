@@ -78,9 +78,15 @@ struct HomeView: View {
                     }
                 }
                 .sheet(isPresented: $showAddExpense) {
-                    AddExpenseView {
+                    AddExpenseView { isAdded in
                         fetchCategories()
-                        toast.show("Витрату додано ✅")
+
+                        toast.show(
+                            isAdded
+                            ? "Витрату додано ✅"
+                            : "Витрату оновлено ✅"
+                        )
+                        
                     }
                     .environment(\.managedObjectContext, context)
                     .environmentObject(toast)

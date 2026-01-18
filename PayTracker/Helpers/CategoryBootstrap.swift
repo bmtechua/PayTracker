@@ -12,25 +12,17 @@ struct CategoryBootstrap {
     static func addBaseCategoriesIfNeeded(context: NSManagedObjectContext) {
 
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
-        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "isPremium == NO")
 
         let count = (try? context.count(for: request)) ?? 0
         guard count == 0 else { return }
 
-        let base: [(String, String, String)] = [
-            ("Їжа", "fork.knife", "#FF6B6B"),
-            ("Транспорт", "car.fill", "#4D96FF"),
-            ("Розваги", "gamecontroller.fill", "#FFD93D"),
-            ("Здоровʼя", "cross.fill", "#6BCF63"),
-            ("Інше", "square.grid.2x2.fill", "#999999")
-        ]
-
-        for item in base {
+        BaseCategory.allCases.forEach { base in
             let c = CategoryEntity(context: context)
             c.id = UUID()
-            c.name = item.0
-            c.icon = item.1
-            c.colorHex = item.2
+            c.name = base.name
+            c.icon = base.icon
+            c.colorHex = base.colorHex
             c.isPremium = false
         }
 
