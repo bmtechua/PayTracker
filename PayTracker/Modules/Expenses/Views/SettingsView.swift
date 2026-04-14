@@ -88,15 +88,10 @@ struct SettingsView: View {
                         }
                     }
                 }
-                // 📊 Activity Log (НОВЕ)
                 Section(header: Text("Дані")) {
-                    
-                    // 📊 Activity Log (НОВЕ)
+                    // 📊 Activity Log
                     NavigationLink {
-                        
-                        Button("Показати логи") {
-                            print(FileLogger.shared.readLogs())
-                        }
+                        ActivityListView()
                     } label: {
                         HStack {
                             Text("Активність")
