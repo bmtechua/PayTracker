@@ -58,11 +58,13 @@ struct AddExpenseView: View {
             }
             .onAppear {
                 if let expense = expenseToEdit {
+                    Log.expense("Editing expense: \(expense.wrappedTitle)")
                     title = expense.wrappedTitle
                     amount = String(expense.amount)
                     date = expense.date ?? Date()
                     selectedCategory = expense.categoryRel
                 }
+                
             }
         }
     }
@@ -72,10 +74,12 @@ struct AddExpenseView: View {
             !title.isEmpty,
             let selectedCategory,
             let amountValue = Double(amount)
+                
         else {
             //toastManager.show("Заповніть усі поля ❌")
             return
         }
+        Log.expense("\(expenseToEdit == nil ? "Create" : "Update"): \(title), \(amountValue)")
 
         let expense = expenseToEdit ?? ExpenseEntity(context: context)
         if expenseToEdit == nil {
@@ -89,18 +93,18 @@ struct AddExpenseView: View {
         do {
             try context.save()
             
-            // 🔹 Показати toast про успіх
-            //toastManager.show(expenseToEdit == nil ? "Витрату додано ✅" : "Витрату оновлено ✅")
+        
             
             // 🔹 Оновити список витрат у батьківському вью
             onSave?(expenseToEdit == nil) // true = додано
-            
+            Log.coredata("Expense saved successfully")
             // 🔹 Закрити модальне вікно
             dismiss()
         } catch {
             onSave?(false)
+            Log.coredata("❌ Save error: \(error.localizedDescription)")
             print("❌ Save error:", error)
-            //toastManager.show("Помилка при збереженні ❌")
+            
         }
     }
 }

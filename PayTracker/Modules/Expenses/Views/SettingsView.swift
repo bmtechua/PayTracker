@@ -93,7 +93,10 @@ struct SettingsView: View {
                     
                     // 📊 Activity Log (НОВЕ)
                     NavigationLink {
-                      
+                        
+                        Button("Показати логи") {
+                            print(FileLogger.shared.readLogs())
+                        }
                     } label: {
                         HStack {
                             Text("Активність")

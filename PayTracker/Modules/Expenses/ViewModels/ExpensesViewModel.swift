@@ -8,6 +8,7 @@
 import SwiftUI
 import CoreData
 import Combine
+import os
 
 class ExpensesViewModel: ObservableObject {
 
@@ -20,7 +21,7 @@ class ExpensesViewModel: ObservableObject {
     private let context = PersistenceController.shared.container.viewContext
 
     // MARK: - Fetch
-
+    
     func fetchExpenses() {
         let request: NSFetchRequest<ExpenseEntity> = ExpenseEntity.fetchRequest()
 
@@ -34,9 +35,21 @@ class ExpensesViewModel: ObservableObject {
             selectedMonth.endOfMonth as NSDate
         )
 
-        expenses = (try? context.fetch(request)) ?? []
+        do {
+            expenses = try context.fetch(request)
+            
+            AppLogger.expense.info("Fetched \(self.expenses.count) expenses")
+            Log.expense("Fetched \(expenses.count) expenses")
+            
+        } catch {
+            AppLogger.coredata.error("Fetch error: \(error.localizedDescription)")
+            expenses = []
+        }
+
         applyFilters()
     }
+
+   
 
     // MARK: - Filters
 
@@ -67,8 +80,28 @@ class ExpensesViewModel: ObservableObject {
     }
 
     // MARK: - Delete
-
+    
     func deleteExpense(group: DayGroup, offsets: IndexSet) {
+
+        let expensesToDelete = offsets.map { group.expenses[$0] }
+
+        expensesToDelete.forEach {
+            AppLogger.expense.info("Deleting expense: \($0.wrappedTitle), amount: \($0.amount)")
+            Log.expense("Deleting: \($0.wrappedTitle), \($0.amount)")
+            context.delete($0)
+        }
+
+        do {
+            try context.save()
+            AppLogger.coredata.info("Delete saved successfully")
+        } catch {
+            AppLogger.coredata.error("Delete error: \(error.localizedDescription)")
+        }
+
+        fetchExpenses()
+    }
+
+    /*func deleteExpense(group: DayGroup, offsets: IndexSet) {
 
         let expensesToDelete = offsets.map { group.expenses[$0] }
 
@@ -79,57 +112,11 @@ class ExpensesViewModel: ObservableObject {
         } catch {
             print("Delete error:", error)
         }
-        // 🔥 LOG кожної витрати
+       
    
         fetchExpenses()
-    }
+    }*/
 
 }
 
-/*
-class ExpensesViewModel: ObservableObject {
 
-    @Published var expenses: [ExpenseEntity] = []
-    @Published var groupedExpenses: [DayGroup] = []
-
-    @Published var searchText: String = ""
-    @Published var selectedMonth: Date = Date()
-
-    private let service = ExpenseService()
-
-    func loadExpenses() {
-        expenses = service.fetchExpenses()
-        applyFilters()
-    }
-
-    func applyFilters() {
-        var filtered = expenses
-
-        if !searchText.isEmpty {
-            filtered = filtered.filter {
-                ($0.title ?? "").lowercased().contains(searchText.lowercased())
-            }
-        }
-
-        filtered = filtered.filter {
-            guard let date = $0.date else { return false }
-            return Calendar.current.isDate(date, equalTo: selectedMonth, toGranularity: .month)
-        }
-        groupedExpenses = service.groupByDay(filtered)
-    }
-
-    func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f.string(from: date)
-    }
-
-    func formatAmount(_ amount: Double) -> String {
-        String(format: "%.2f", amount)
-    }
-
-    func formatTotal(_ total: Double) -> String {
-        String(format: "%.2f", total)
-    }
-}
-*/
