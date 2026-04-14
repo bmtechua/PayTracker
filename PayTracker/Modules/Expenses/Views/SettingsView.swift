@@ -93,7 +93,7 @@ struct SettingsView: View {
                     
                     // 📊 Activity Log (НОВЕ)
                     NavigationLink {
-                        ActivityListView()
+                      
                     } label: {
                         HStack {
                             Text("Активність")

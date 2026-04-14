@@ -107,12 +107,6 @@ struct AddCategoryView: View {
             try context.save()
 
             // 🔥 LOG ТУТ (ПІСЛЯ SAVE)
-            ActivityLogger.log(
-                isNew ? .addCategory : .editCategory,
-                title: isNew ? "Категорія створена" : "Категорія змінена",
-                message: isNew ? name : "\(oldName) → \(name)",
-                context: context
-            )
 
             onSave?()
             dismiss()

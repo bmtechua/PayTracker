@@ -69,37 +69,18 @@ class ExpensesViewModel: ObservableObject {
     // MARK: - Delete
 
     func deleteExpense(group: DayGroup, offsets: IndexSet) {
-<<<<<<< HEAD
 
         let expensesToDelete = offsets.map { group.expenses[$0] }
 
         expensesToDelete.forEach { context.delete($0) }
-=======
-        offsets.map { group.expenses[$0] }.forEach(context.delete)
->>>>>>> parent of 0916eba (commit12)
 
         do {
             try context.save()
         } catch {
             print("Delete error:", error)
         }
-
-<<<<<<< HEAD
-<<<<<<< HEAD:PayTracker/ViewModels/ExpensesViewModel.swift
         // 🔥 LOG кожної витрати
-        expensesToDelete.forEach { expense in
-            ActivityLogger.log(
-                .deleteExpense,
-                title: "Витрата видалена",
-                message: expense.wrappedTitle,
-                context: context
-            )
-        }
-
-=======
->>>>>>> parent of 0916eba (commit12):PayTracker/Modules/Expenses/ViewModels/ExpensesViewModel.swift
-=======
->>>>>>> parent of 0916eba (commit12)
+   
         fetchExpenses()
     }
 
