@@ -80,6 +80,7 @@ struct AddCategoryView: View {
 
     // MARK: - Збереження
     private func saveCategory() {
+
         // 🔒 Захист від не-Premium
         guard userManager.isPremium else {
             dismiss()
@@ -92,21 +93,34 @@ struct AddCategoryView: View {
             return
         }
 
+        let isNew = categoryToEdit == nil
         let category = categoryToEdit ?? CategoryEntity(context: context)
+
+        let oldName = category.name ?? ""
+
         category.name = name
         category.icon = icon
         category.colorHex = colorHex
-        category.isPremium = true   // 🔐 ВСІ користувацькі категорії = premium
+        category.isPremium = true
 
         do {
             try context.save()
+
+            // 🔥 LOG ТУТ (ПІСЛЯ SAVE)
+            ActivityLogger.log(
+                isNew ? .addCategory : .editCategory,
+                title: isNew ? "Категорія створена" : "Категорія змінена",
+                message: isNew ? name : "\(oldName) → \(name)",
+                context: context
+            )
+
             onSave?()
             dismiss()
+
         } catch {
             print("Помилка збереження категорії:", error)
         }
-    }
-}
+    }}
 
 // MARK: - Color + HEX
 extension Color {

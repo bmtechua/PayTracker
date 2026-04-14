@@ -88,6 +88,21 @@ struct SettingsView: View {
                         }
                     }
                 }
+                // 📊 Activity Log (НОВЕ)
+                Section(header: Text("Дані")) {
+                    
+                    // 📊 Activity Log (НОВЕ)
+                    NavigationLink {
+                        ActivityListView()
+                    } label: {
+                        HStack {
+                            Text("Активність")
+                            Spacer()
+                            Image(systemName: "clock.arrow.circlepath")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
 
                 // ℹ️ Інфо
                 Section {

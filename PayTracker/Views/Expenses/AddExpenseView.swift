@@ -108,15 +108,12 @@ struct AddExpenseView: View {
 
     // MARK: - Save
     private func save() {
-
         guard
             !title.isEmpty,
             let selectedCategoryID,
             let category = try? context.existingObject(with: selectedCategoryID) as? CategoryEntity,
             let amountValue = Double(amount)
-        else {
-            return
-        }
+        else { return }
 
         let expense = expenseToEdit ?? ExpenseEntity(context: context)
 
@@ -131,24 +128,14 @@ struct AddExpenseView: View {
 
         do {
             try context.save()
-
             onSave?(expenseToEdit == nil)
-            //dismiss()
 
         } catch {
             print("❌ Save error:", error)
             onSave?(false)
         }
-        
-        ActivityLogger.log(
-            expenseToEdit == nil ? .addExpense : .editExpense,
-            title: expenseToEdit == nil ? "Додано витрату" : "Змінено витрату",
-            message: title,
-            context: context
-        )
     }
 }
-
 #Preview {
     let persistence = PersistenceController.shared
     let context = persistence.context

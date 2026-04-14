@@ -86,21 +86,27 @@ class ExpensesViewModel: ObservableObject {
     // MARK: - Delete
 
     func deleteExpense(group: DayGroup, offsets: IndexSet) {
-        offsets.map { group.expenses[$0] }.forEach(context.delete)
+
+        let expensesToDelete = offsets.map { group.expenses[$0] }
+
+        expensesToDelete.forEach { context.delete($0) }
 
         do {
             try context.save()
         } catch {
             print("Delete error:", error)
         }
-        
-        ActivityLogger.log(
-            .deleteExpense,
-            title: "Витрата видалена",
-            message: expense.wrappedTitle,
-            context: context
-        )
-        
+
+        // 🔥 LOG кожної витрати
+        expensesToDelete.forEach { expense in
+            ActivityLogger.log(
+                .deleteExpense,
+                title: "Витрата видалена",
+                message: expense.wrappedTitle,
+                context: context
+            )
+        }
+
         fetchExpenses()
     }
 }
