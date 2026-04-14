@@ -8,19 +8,23 @@
 import SwiftUI
 
 struct MainTabView: View {
+    
+    @Environment(\.managedObjectContext) private var context
 
     var body: some View {
         TabView {
+            
+            ExpensesListView(context: context)
+                .tabItem {
+                    Label("Всі", systemImage: "tray.full")
+                }
 
             HomeView()
                 .tabItem {
                     Label("Витрати", systemImage: "list.bullet")
                 }
             
-            ExpensesListView()
-                .tabItem {
-                    Label("Всі", systemImage: "tray.full")
-                }
+           
             CategoriesView()
                     .tabItem {
                         Label("Категорії", systemImage: "tag")
@@ -36,5 +40,6 @@ struct MainTabView: View {
                     Label("Налаштування", systemImage: "gear")
                 }
         }
+        .tint(.green) 
     }
 }

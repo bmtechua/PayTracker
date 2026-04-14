@@ -17,7 +17,14 @@ class ExpensesViewModel: ObservableObject {
     @Published var selectedMonth = Date().startOfMonthOnly
     @Published var searchText = ""
 
-    private let context = PersistenceController.shared.container.viewContext
+    private let context: NSManagedObjectContext
+
+    // MARK: - Init
+
+    init(context: NSManagedObjectContext) {
+        self.context = context
+        fetchExpenses()
+    }
 
     // MARK: - Fetch
 
@@ -28,13 +35,23 @@ class ExpensesViewModel: ObservableObject {
             NSSortDescriptor(keyPath: \ExpenseEntity.date, ascending: false)
         ]
 
+        // ✅ ПРАВИЛЬНИЙ ФІЛЬТР ДАТИ
+        let start = selectedMonth.startOfMonth
+        let end = Calendar.current.date(byAdding: .month, value: 1, to: start)!
+
         request.predicate = NSPredicate(
-            format: "date >= %@ AND date <= %@",
-            selectedMonth.startOfMonth as NSDate,
-            selectedMonth.endOfMonth as NSDate
+            format: "date >= %@ AND date < %@",
+            start as NSDate,
+            end as NSDate
         )
 
-        expenses = (try? context.fetch(request)) ?? []
+        do {
+            expenses = try context.fetch(request)
+        } catch {
+            print("Fetch error:", error)
+            expenses = []
+        }
+
         applyFilters()
     }
 
@@ -76,56 +93,14 @@ class ExpensesViewModel: ObservableObject {
         } catch {
             print("Delete error:", error)
         }
-
+        
+        ActivityLogger.log(
+            .deleteExpense,
+            title: "Витрата видалена",
+            message: expense.wrappedTitle,
+            context: context
+        )
+        
         fetchExpenses()
     }
-
 }
-
-/*
-class ExpensesViewModel: ObservableObject {
-
-    @Published var expenses: [ExpenseEntity] = []
-    @Published var groupedExpenses: [DayGroup] = []
-
-    @Published var searchText: String = ""
-    @Published var selectedMonth: Date = Date()
-
-    private let service = ExpenseService()
-
-    func loadExpenses() {
-        expenses = service.fetchExpenses()
-        applyFilters()
-    }
-
-    func applyFilters() {
-        var filtered = expenses
-
-        if !searchText.isEmpty {
-            filtered = filtered.filter {
-                ($0.title ?? "").lowercased().contains(searchText.lowercased())
-            }
-        }
-
-        filtered = filtered.filter {
-            guard let date = $0.date else { return false }
-            return Calendar.current.isDate(date, equalTo: selectedMonth, toGranularity: .month)
-        }
-        groupedExpenses = service.groupByDay(filtered)
-    }
-
-    func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f.string(from: date)
-    }
-
-    func formatAmount(_ amount: Double) -> String {
-        String(format: "%.2f", amount)
-    }
-
-    func formatTotal(_ total: Double) -> String {
-        String(format: "%.2f", total)
-    }
-}
-*/

@@ -5,6 +5,7 @@
 //  Created by user on 01.01.2026.
 //
 
+
 import SwiftUI
 import CoreData
 
@@ -135,3 +136,4 @@ struct HomeView: View {
             .sorted { $0.total > $1.total }
     }
 }
+

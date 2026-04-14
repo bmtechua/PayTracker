@@ -54,3 +54,14 @@ struct CategoryDetailView: View {
         expenses = (try? context.fetch(request)) ?? []
     }
 }
+
+#Preview {
+    let persistence = PersistenceController.shared
+    let context = persistence.context
+
+    CategoryDetailView(
+        categoryName: "food",
+            month: Date()
+        )
+        .environment(\.managedObjectContext, context)
+}
