@@ -21,6 +21,9 @@ struct CategoriesView: View {
     @State private var showAddCategory = false
     @State private var categoryToEdit: CategoryEntity?
 
+   /* private var isPremiumUser: Bool {
+        categories.contains(where: { $0.isPremium })
+    }*/
 
     var body: some View {
         NavigationStack {
@@ -115,12 +118,4 @@ struct CategoriesView: View {
             }
         }
     }
-}
-
-#Preview {
-    let persistence = PersistenceController.shared
-    let context = persistence.context
-
-    CategoriesView()
-        .environment(\.managedObjectContext, context)
 }
