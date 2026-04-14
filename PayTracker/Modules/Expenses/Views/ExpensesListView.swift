@@ -34,7 +34,9 @@ struct ExpensesListView: View {
                 }
             }
             .listStyle(.plain)
-            
+            .onAppear {
+                vm.fetchExpenses()
+            }
             // 🔝 Title
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -46,7 +48,20 @@ struct ExpensesListView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAddExpense = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
             }
+            .sheet(isPresented: $showAddExpense) {
+                AddExpenseView { _ in
+                    vm.fetchExpenses()
+                }
+            }
+            
             
         }}
     
