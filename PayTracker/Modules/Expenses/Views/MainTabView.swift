@@ -11,16 +11,18 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
+            
+            ExpensesListView()
+                .tabItem {
+                    Label("Всі", systemImage: "tray.full")
+                }
 
             HomeView()
                 .tabItem {
                     Label("Витрати", systemImage: "list.bullet")
                 }
             
-            ExpensesListView()
-                .tabItem {
-                    Label("Всі", systemImage: "tray.full")
-                }
+            
             CategoriesView()
                     .tabItem {
                         Label("Категорії", systemImage: "tag")
